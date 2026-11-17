@@ -14,7 +14,7 @@ on:
         type: boolean
         default: false
       package_name:
-        description: 'package name of the manager'
+        description: 'package name of manager'
         required: false
         default: 'me.weishu.kernelsu'
         type: string

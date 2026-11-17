@@ -169,11 +169,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build with Gradle
+        env:
+          KSU_PACKAGE_NAME: ${{ vars.KSU_PACKAGE_NAME || 'me.weishu.kernelsu' }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            ./gradlew clean assembleRelease -PIS_PR_BUILD=true
+            ./gradlew clean assembleRelease -PIS_PR_BUILD=true \
+            -PKSU_PACKAGE_NAME="${KSU_PACKAGE_NAME}.pr"
           else
-            ./gradlew clean assembleRelease
+            ./gradlew clean assembleRelease \
+            -PKSU_PACKAGE_NAME="$KSU_PACKAGE_NAME"
           fi
 
       - name: Upload build artifact

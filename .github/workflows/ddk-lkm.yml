@@ -100,6 +100,10 @@ jobs:
 
         echo "=== Building kernelsu.ko for KMI: ${{ inputs.kmi }} ==="
 
+        if [ "${{ github.event_name }}" = "pull_request" ] && [ -n "$PACKAGE_NAME" ]; then
+          export PACKAGE_NAME="${PACKAGE_NAME}.pr"
+        fi
+
         EXTRA_ARGS=""
         if [ -n "$PACKAGE_NAME" ]; then
           EXTRA_ARGS="$EXTRA_ARGS KSU_PACKAGE_NAME=$PACKAGE_NAME"
