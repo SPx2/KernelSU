@@ -17,6 +17,16 @@ on:
         required: false
         default: ''
         type: string
+      disable_cfi:
+        description: 'disable CFI (Control Flow Integrity) for non-CFI Samsung kernels'
+        required: false
+        default: false
+        type: boolean
+      disable_scs:
+        description: 'disable SCS (Shadow Call Stack) for non-SCS Samsung kernels'
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
 jobs:
   build-lkm:
@@ -37,3 +47,5 @@ jobs:
       package_name: ${{ inputs.package_name || '' }}
       expected_size: ${{ inputs.expected_size || '' }}
       expected_hash: ${{ inputs.expected_hash || '' }}
+      disable_cfi: ${{ inputs.disable_cfi || false }}
+      disable_scs: ${{ inputs.disable_scs || false }}

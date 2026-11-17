@@ -27,6 +27,16 @@ on:
         required: false
         default: ''
         type: string
+      disable_cfi:
+        description: 'disable CFI (Control Flow Integrity) for non-CFI Samsung kernels'
+        required: false
+        default: false
+        type: boolean
+      disable_scs:
+        description: 'disable SCS (Shadow Call Stack) for non-SCS Samsung kernels'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-kernelsu-ko:
@@ -39,6 +49,44 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v7
+
+    - name: Apply DDK compatibility overrides
+      env:
+        DISABLE_CFI: ${{ inputs.disable_cfi }}
+        DISABLE_SCS: ${{ inputs.disable_scs }}
+      run: |
+        set -euo pipefail
+
+        : "${KDIR:?KDIR is not set}"
+
+        AUTOCONF_H="$KDIR/include/generated/autoconf.h"
+        AUTO_CONF="$KDIR/include/config/auto.conf"
+
+        [ -f "$AUTOCONF_H" ]
+        [ -f "$AUTO_CONF" ]
+
+        disable_config() {
+          symbol="$1"
+          sed -i "s@^#define ${symbol} 1\$@/* & */ // disabled to match target kernel@" "$AUTOCONF_H"
+          sed -i "s@^\(${symbol}\)=y\$@# \1 is not set@" "$AUTO_CONF"
+          if grep -q "^#define ${symbol} 1\$" "$AUTOCONF_H" || \
+             grep -q "^${symbol}=y\$" "$AUTO_CONF"; then
+            echo "ERROR: $symbol is still enabled"
+            return 1
+          fi
+          echo "OK: $symbol disabled"
+        }
+
+        if [ "${DISABLE_CFI:-false}" = "true" ]; then
+          disable_config CONFIG_CFI_CLANG
+        fi
+
+        if [ "${DISABLE_SCS:-false}" = "true" ]; then
+          disable_config CONFIG_SHADOW_CALL_STACK
+        fi
+
+        echo "=== Effective DDK configuration ==="
+        grep -E 'CONFIG_(CFI_CLANG|SHADOW_CALL_STACK)' "$AUTO_CONF" || true
 
     - name: Build kernelsu.ko
       env:
